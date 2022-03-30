@@ -1,0 +1,35 @@
+﻿@using ChamadoFront.ViewModel
+@using System.Text.Json.Serialization
+@using Models
+@using System.Text.Json
+@using System.Text.Json.Nodes
+@using JsonSerializer = System.Text.Json.JsonSerializer
+@inject IModalService _modal
+@inject HttpClient _httpClient
+
+<h3>Já fiz um chamado</h3>
+<EditForm Model="@ProcurarChamadoViewModel" OnValidSubmit="ProcurarProtocolo" class="needs-validation">
+    <div class="col-auto">
+        <InputText type="text" @bind-Value="ProcurarChamadoViewModel.Protocolo"  class="form-control" id="inputPassword2" placeholder="n.Protocolo"/>
+    </div>
+    <div class="col-auto">
+        <button type="submit" class="btn btn-success mb-3">Buscar Chamado</button>
+    </div>
+</EditForm>
+
+@code {
+    public ProcurarChamadoViewModel ProcurarChamadoViewModel { get; set; } = new ProcurarChamadoViewModel();
+    private readonly string  _api = "chamado/";
+
+    
+    protected async Task ProcurarProtocolo()
+    {
+        var response = await _httpClient.PostAsJsonAsync(_api + ProcurarChamadoViewModel.Protocolo
+            ,ProcurarChamadoViewModel.Protocolo);
+        var chamado = JsonSerializer.Deserialize<Chamado>(await response.Content.ReadAsStringAsync());
+        _modal.Show<ChamadoDetalhes>(chamado?.ToString());
+        ProcurarChamadoViewModel = new ProcurarChamadoViewModel();
+
+
+    }
+}

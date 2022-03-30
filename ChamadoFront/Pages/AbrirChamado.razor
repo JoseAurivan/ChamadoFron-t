@@ -1,0 +1,93 @@
+﻿@using ChamadoFront.ViewModel
+@using Models
+@using Models.Enums
+@using System.Text.Json.Serialization
+@using System.Text.Json
+@inject HttpClient _httpClient
+@inject IJSRuntime _jsRuntime
+<h1>Abrir um chamado</h1>
+
+<p>Inserir as credenciais para abertura de um chamado </p>
+
+<EditForm Model="@AbrirChamadoViewModel" OnValidSubmit="CriarChamado" class="needs-validation">
+    <div class="form-row">
+        <div class="col-md-4 mb-3">
+            <label for="validationCustom01">Nome:</label>
+            <InputText type="text" @bind-Value="AbrirChamadoViewModel.Nome" class="form-control" id="validationCustom01" placeholder="Nome" required/>
+        </div>
+        <div class="col-md-4 mb-3">
+            <label for="validationCustom02">Email:</label>
+            <InputText type="email" @bind-Value="AbrirChamadoViewModel.Email" class="form-control" id="validationCustom02" placeholder="Email" required/>
+        </div>
+        <div class="col-md-4 mb-3">
+            <label for="validationCustomUsername">CPF:</label>
+            <div class="input-group">
+                <div class="input-group-prepend">
+                    <span class="input-group-text" id="inputGroupPrepend">CPF:</span>
+                </div>
+                <InputText type="text" @bind-Value="AbrirChamadoViewModel.Cpf" class="form-control" id="validationCustomUsername" placeholder="CPF" aria-describedby="inputGroupPrepend" required/>
+            </div>
+        </div>
+    </div>
+    <div class="form-row">
+        <div class="col-md-6 mb-3">
+            <label for="validationCustom03">Setor</label>
+            <InputText @bind-Value="AbrirChamadoViewModel.Setor" type="text" class="form-control" id="validationCustom03" placeholder="Setor" required/>
+        </div>
+        <div class="col-md-3 mb-3">
+            <label for="validationCustom04">Celular</label>
+            <InputText @bind-Value="AbrirChamadoViewModel.Celular" type="text" class="form-control" id="validationCustom04" placeholder="Celular" required/>
+        </div>
+    </div>
+    <div class="card" style="width: 25rem; margin-bottom: 15px;">
+        <div class="card-body">
+            <h6 class="card-title">Sobre o Chamado</h6>
+            <div class="form-row">
+                <label for="validationCustom01">Descricao:</label>
+                <InputTextArea @bind-Value="AbrirChamadoViewModel.Descricao" class="form-control" id="exampleFormControlTextarea1" rows="3"></InputTextArea>
+            </div>
+            <div class="form-row">
+                <label for="validationCustom03">Setor Destino:</label>
+                <InputSelect @bind-Value="AbrirChamadoViewModel.SetorDestino">
+                    @foreach (var setores in Enum.GetValues(typeof(Setor)))
+                    {
+                        <option value="@setores">@setores</option>
+                    }
+                </InputSelect>
+            </div>
+        </div>
+    </div>
+    <button class="btn btn-success" type="submit">Abrir Chamado</button>
+    <button class="btn btn-outline-info" type="reset">Limpar</button>
+</EditForm>
+
+@code {
+    AbrirChamadoViewModel AbrirChamadoViewModel { get; set; } = new AbrirChamadoViewModel();
+
+
+    protected async Task CriarChamado()
+    {
+        var _clientApi = "cliente/";
+        var _chamadoApi = "chamado/";
+
+        var chamado = AbrirChamadoViewModel.ToModelChamado(AbrirChamadoViewModel.Descricao, AbrirChamadoViewModel.SetorDestino);
+
+        var cliente = AbrirChamadoViewModel.ToModelCliente(
+            AbrirChamadoViewModel.Nome,
+            AbrirChamadoViewModel.Cpf,
+            AbrirChamadoViewModel.Email,
+            AbrirChamadoViewModel.Setor,
+            AbrirChamadoViewModel.Celular);
+
+        var response = await _httpClient.PostAsJsonAsync(_clientApi, cliente);
+        var responseText = await response.Content.ReadAsStringAsync();
+        _chamadoApi += responseText;
+        var textresponse = await _httpClient.PostAsJsonAsync(_chamadoApi, chamado);
+        var text = await textresponse.Content.ReadAsStringAsync();
+        await _jsRuntime.InvokeAsync<object>("alert", "Seu número de protocolo é: "+text);
+
+        
+        AbrirChamadoViewModel = new AbrirChamadoViewModel();
+    }
+
+}

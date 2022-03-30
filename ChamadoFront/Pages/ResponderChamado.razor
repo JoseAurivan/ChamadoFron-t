@@ -1,0 +1,85 @@
+﻿@page "/ResponderChamado/{id}"
+@using Models
+@using ChamadoFront.ViewModel
+@using Models.Enums
+@inject HttpClient _httpClient
+@inject IJSRuntime _jsRuntime
+@inject NavigationManager _navigationManager;
+<AuthorizeView>
+    <Authorized>
+        <a href="counter" class="btn btn-primary" style="margin-bottom: 15px">Voltar A lista</a>
+
+        @if (Chamado is not null)
+        {
+            <div class="card" style="margin-bottom: 15px;">
+                <div class="card-header">
+                    Dados do Chamado
+                </div>
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item">
+                        Nome: @Chamado.Cliente?.Nome
+                    </li>
+                    <li class="list-group-item">
+                        Descricao: @Chamado.Descricao
+                    </li>
+                    <li class="list-group-item">
+                        Setor Destino: @Chamado.SetorDestimno
+                    </li>
+                    <li class="list-group-item">
+                        Setor: @Chamado.Cliente?.Setor
+                    </li>
+                    <li class="list-group-item">
+                        Celular:@Chamado.Cliente?.Celular
+                    </li>
+                </ul>
+            </div>
+        }
+     </Authorized>
+</AuthorizeView>
+            <EditForm Model="@ResponderChamadoViewModel" OnValidSubmit="GerarRespostaChamado"  class="needs-validation">
+                <div class="form-row">
+                    <label for="validationCustom03">Resposta do Chamado:</label>
+                    <InputTextArea @bind-Value="ResponderChamadoViewModel.Resposta" class="form-control" id="exampleFormControlTextarea1" rows="3" required/>
+                </div>
+                <div class="form-row" style="margin-bottom: 15px">
+                    <label for="validationCustom03">Status do Chamado:</label>
+                    <InputSelect @bind-Value="ResponderChamadoViewModel.StatusChamado">
+                        @foreach (var status in Enum.GetValues(typeof(StatusChamado)))
+                        {
+                            <option value="@status">@status</option>
+                        }
+                    </InputSelect>
+                </div>
+                <button class="btn btn-success" type="submit">Enviar resposta</button>
+                <button class="btn btn-outline-info" type="reset">Limpar</button>
+            </EditForm>
+        
+
+
+@code {
+
+    [Parameter]
+    public string Id { get; set; }
+
+    private string _api = "chamado/";
+
+    public ResponderChamadoViewModel ResponderChamadoViewModel { get; set; } = new ResponderChamadoViewModel();
+
+    public Chamado Chamado { get; set; } = new Chamado();
+
+    protected override async Task OnInitializedAsync()
+    {
+        Chamado = await _httpClient.GetFromJsonAsync<Chamado>(_api + Id);
+    }
+
+    public async Task GerarRespostaChamado()
+    {
+        Chamado.Resposta = ResponderChamadoViewModel.Resposta;
+        Chamado.StatusChamado = ResponderChamadoViewModel.StatusChamado;
+        Chamado.Id = Int32.Parse(Id);
+
+        await _httpClient.PutAsJsonAsync(_api, Chamado);
+        _navigationManager.NavigateTo("/counter");
+    }
+
+}
